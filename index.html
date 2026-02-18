@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GST Refund Calculator</title>
+    <meta name="description" content="Professional GST Refund Calculator for Inverted Duty Structure & Zero-Rated Supply.">
+    <meta name="author" content="CA Jitendra Kumar Chopra">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #e6e9fc 0%, #c5d4f3 100%); color: #1f2937; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 1rem; font-size: 0.875rem; zoom: 0.9; }
+        .redesigned-title { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; background: linear-gradient(to right, #1e40af, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.025em; }
+        .glass-container { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.5); border-radius: 1.5rem; box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1); padding: 1.5rem; width: 98%; max-width: 1400px; }
+        .glass-table { background: #fff; border-radius: 1rem; overflow: hidden; border-collapse: collapse; width: 100%; }
+        thead th { font-weight: 600; color: #334155; text-align: center; padding: 0.5rem 0.25rem; cursor: pointer; transition: 0.3s; position: sticky; top: 0; z-index: 10; font-size: 0.8rem; }
+        .main-header-tr { background-color: #f1f5f9; }
+        thead th.input-col:hover { background: #e2e8f0; color: #1e293b; }
+        tbody tr:nth-child(even) { background: #f8fafc; }
+        tbody td { padding: 0.25rem; text-align: center; border-top: 1px solid #e2e8f0; font-size: 0.8rem; }
+        .highlight-inv-refund { background: #d1fae5 !important; color: #065f46 !important; font-weight: 600; }
+        .highlight-zr-refund { background: #dbeafe !important; color: #1e40af !important; font-weight: 600; }
+        .total-fy-row { background-color: #e2e8f0 !important; font-weight: 700; color: #1f2937; }
+        input[type="text"] { width: 100%; max-width: 110px; padding: 0.25rem 0.5rem; border: 1px solid #e2e8f0; background: #fff; border-radius: 0.5rem; text-align: right; transition: 0.3s; color: #1f2937; font-size: 0.75rem; }
+        input[type="text"]:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); }
+        input[type="text"]:read-only { background: #f1f5f9; border-color: #e2e8f0; }
+        .button { background: #fff; color: #2563eb; padding: 0.6rem 1.25rem; font-size: 0.8rem; font-weight: 600; border-radius: 9999px; margin: 0.3rem; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); }
+        .button:hover { background: #f8fafc; transform: translateY(-1px); }
+        .button-excel { background: #f0fdf4 !important; color: #166534 !important; border-color: #dcfce7 !important; }
+        .modal { position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); display: none; justify-content: center; align-items: center; }
+        .modal-content { background: #fff; border-radius: 1.5rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); padding: 0; width: 90%; max-width: 650px; position: relative; overflow: hidden; border: none; }
+        .close-btn { position: absolute; right: 1.5rem; top: 1.5rem; font-size: 1.5rem; font-weight: 800; color: #1f2937; cursor: pointer; z-index: 10; }
+        .provision-card { border-left: 4px solid #3b82f6; background-color: #eff6ff; border-radius: 0.5rem; padding: 1.25rem; margin-bottom: 1rem; }
+        .provision-card.green { border-left: 4px solid #10b981; background-color: #ecfdf5; }
+        .provision-card.amber { border-left: 4px solid #f59e0b; background-color: #fffbeb; }
+        .modal-header-text { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; color: #2563eb; margin-bottom: 1.5rem; }
+        .message-box { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 1000; text-align: center; padding: 0.5rem 1.5rem; background: #d1fae5; color: #065f46; border-radius: 2rem; border: 1px solid #6ee7b7; box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1); font-size: 0.85rem; font-weight: 600; pointer-events: none; display: none; animation: toastPop 0.3s ease-out; }
+        @keyframes toastPop { from { transform: translate(-50%, -20px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+        .formula-row { font-size: 0.65rem; background-color: #f8fafc; }
+        
+        /* Redesigned Lighter Welcome Modal */
+        .welcome-header { background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); padding: 3rem 2rem; color: #0369a1; text-align: center; border-bottom: 1px solid #bae6fd; }
+        .welcome-body { padding: 2.5rem; background: white; }
+    </style>
+</head>
+<body>
+  <div class="container p-4 glass-container">
+    <div class="text-center">
+      <h2 class="text-3xl redesigned-title mb-1">GST Refund Calculator</h2>
+      <p class="text-sm text-gray-600 mb-4">Inverted Duty Structure & Zero-Rated Supply (under LUT/Bond)</p>
+    </div>
+    <div class="flex flex-col items-center mb-4 gap-1">
+      <div class="flex flex-wrap justify-center">
+        <button class="button button-excel" onclick="loadSampleData()">Load Sample Data</button>
+        <button class="button button-excel" onclick="resetCalculator()">Reset Data</button>
+        <button class="button button-excel" onclick="downloadTemplate()">Download Excel Format</button>
+        <button class="button button-excel" onclick="openUploadModal()">Upload Excel Data</button>
+        <button class="button button-excel" onclick="exportToExcel()">Download Data as Excel</button>
+      </div>
+      <div class="flex flex-wrap justify-center">
+        <button class="button" onclick="openInvertedProvisionModal()">Inverted Rated Refund (Provisions)</button>
+        <button class="button" onclick="openExportProvisionModal()">Zero Rate ITC Refund (Provisions)</button>
+        <button class="button" onclick="openGuideModal()">Quick guide (help section)</button>
+      </div>
+    </div>
+    <div id="status-message" class="message-box"></div>
+    <div class="table-container overflow-x-auto rounded-lg shadow-xl">
+      <table class="glass-table min-w-full" id="gst-table">
+        <thead>
+          <tr class="main-header-tr">
+            <th class="p-2 sticky left-0 bg-[#f1f5f9]"></th>
+            <th class="p-2 input-col whitespace-normal" onclick="openColumnModal('actual', 'Zero Rated Supply (Actual Value)')">Zero Rated <br>Supply (Actual)</th>
+            <th class="p-2 input-col whitespace-normal" onclick="openColumnModal('fob', 'Zero Rated Supply (FOB Value)')">Zero Rated <br>Supply (FOB)</th>
+            <th class="p-2 whitespace-normal">Zero Rated <br>Min of A or B</th>
+            <th class="p-2 input-col whitespace-normal" onclick="openColumnModal('noninv', 'Non Inverted Taxable Supply')">Non Inverted <br>Taxable Supply</th>
+            <th class="p-2 input-col whitespace-normal" onclick="openColumnModal('inv', 'Inverted Taxable Supply')">Inverted <br>Taxable Supply</th>
+            <th class="p-2 whitespace-normal">Adjusted <br>Total Turnover</th>
+            <th class="p-2 input-col whitespace-normal" onclick="openColumnModal('tax_payable', 'Tax Payable on Inverted Supply')">Tax Payable on <br>Inverted Supply</th>
+            <th class="p-2 input-col whitespace-normal" onclick="openColumnModal('itc_in', 'ITC on Account of Inputs Goods')">ITC on Account <br>of Inputs Goods</th>
+            <th class="p-2 input-col whitespace-normal" onclick="openColumnModal('itc_ser', 'ITC on Account of Input Service')">ITC on Account <br>of Input Service</th>
+            <th class="p-2 whitespace-normal">Total <br>ITC</th>
+            <th class="p-2 highlight-inv-refund whitespace-normal">Inverted Tax <br>Structure Refund</th>
+            <th class="p-2 highlight-zr-refund whitespace-normal">Zero Rated <br>Supply Refund</th>
+          </tr>
+          <tr class="formula-row text-gray-700 italic text-center">
+            <td class="sticky left-0 bg-[#f8fafc] border-t border-gray-200">Formula</td>
+            <td class="border-t border-gray-200">A</td><td class="border-t border-gray-200">B</td><td class="border-t border-gray-200">C = Min(A,B)</td><td class="border-t border-gray-200">D</td><td class="border-t border-gray-200">E</td><td class="border-t border-gray-200">F = C+D+E</td><td class="border-t border-gray-200">G</td><td class="border-t border-gray-200">H</td><td class="border-t border-gray-200">I</td><td class="border-t border-gray-200">J = H+I</td><td class="border-t border-gray-200">K = (HxE/F)-(GxH/J)</td><td class="border-t border-gray-200">L = C x J / F</td>
+          </tr>
+        </thead>
+        <tbody id="calculator-body"></tbody>
+        <tfoot>
+          <tr class="font-bold total-fy-row">
+            <td class="font-medium text-gray-800 sticky left-0 bg-white/30 px-2">Consolidated</td>
+            <td><input type="text" id="sum_actual" readonly></td><td><input type="text" id="sum_fob" readonly></td><td><input type="text" id="sum_min_val" readonly></td><td><input type="text" id="sum_noninv" readonly></td><td><input type="text" id="sum_inv" readonly></td><td><input type="text" id="sum_agg_turnover" readonly></td><td><input type="text" id="sum_tax_payable" readonly></td><td><input type="text" id="sum_itc_in" readonly></td><td><input type="text" id="sum_itc_ser" readonly></td><td><input type="text" id="sum_total_itc" readonly></td><td class="highlight-inv-refund"><input type="text" id="sum_inv_refund" readonly></td><td class="highlight-zr-refund"><input type="text" id="sum_zr_refund" readonly></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <div class="w-full mt-4 flex flex-col items-center">
+    <div class="inline-flex flex-col sm:flex-row items-center gap-2 px-4 py-2 bg-white/80 rounded-2xl sm:rounded-full text-xs text-gray-600 shadow-sm text-center">
+      <span>Curated by CA Jitendra Kumar Chopra | Khandhar Mehta and Shah, Ahmedabad</span>
+      <a href="https://www.linkedin.com/in/cajitendrachopra" target="_blank" class="inline-flex items-center gap-1 text-blue-600 font-medium hover:underline">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M0 1.146C0 .513.526 0 1.175 0h13.65C15.474 0 16 .513 16 1.146v13.708c0 .633-.526 1.146-1.175 1.146H1.175C.526 16 0 15.487 0 14.854V1.146zm4.943 12.248V6.169H2.542v7.225h2.401zM3.743 5.169c.837 0 1.358-.554 1.358-1.248-.015-.709-.521-1.248-1.342-1.248-.821 0-1.358.54-1.358 1.248 0 .694.521 1.248 1.327 1.248h.015zM13.458 13.394v-3.604c0-1.931-1.03-2.831-2.404-2.831-1.105 0-1.597.607-1.873 1.033v-0.886H6.78c.03.587 0 7.225 0 7.225h2.401v-4.037c0-.216.016-.432.079-.586.173-.432.568-.88 1.231-.88.869 0 1.216.664 1.216 1.638v3.865h2.401z"/></svg>
+        Connect on LinkedIn
+      </a>
+    </div>
+    <div class="mt-1 text-[11px] text-gray-500 font-medium">
+      Made using <a href="https://www.anthropic.com/features/claude-on-mars" target="_blank" class="text-blue-500 hover:underline">Claude</a> | Version 1.0 live | Version 1.1 coming soon <button onclick="openVersionModal()" class="ml-1 text-blue-500 hover:text-blue-700 underline transition-colors">View upcoming features</button>
+    </div>
+    <div class="mt-2 text-[10px] text-gray-400 italic text-center whitespace-nowrap">This tool is for educational purposes only. Please consult a professional before filing GST RFD-01.</div>
+  </div>
+
+  <div id="inverted-provision-modal" class="modal"><div class="modal-content" style="max-width: 900px; padding: 2rem;"><span class="close-btn" onclick="closeModal()">&times;</span><h3 class="text-2xl modal-header-text">GST Refund under Inverted Duty Structure</h3><div class="provision-card text-center py-8"><h4 class="font-bold text-gray-800 text-lg mb-4">Refund of ITC accumulated - CGST RULE 89(5)</h4><div class="text-xl overflow-x-auto">\[ Refund = \left( \text{Net ITC} \times \frac{\text{Inverted Turnover}}{\text{Adjusted Total Turnover}} \right) - \left( \text{Tax Payable} \times \frac{\text{Net ITC}}{\text{Total ITC}} \right) \]</div></div><p class="text-xs text-gray-600 mt-2 px-4 mb-4">"Net ITC" shall mean input tax credit availed on Inputs oods during the relevant period.</p><p class="text-center text-xs text-gray-500 pt-4 border-t">For more info - <a href="https://www.linkedin.com/posts/cajitendrachopra_handbook-on-refund-under-inverted-duty-structure-activity-7362785498626514944-jxk_/" target="_blank" class="text-blue-600 font-bold hover:underline">Click here</a></p></div></div>
+  <div id="export-provision-modal" class="modal"><div class="modal-content" style="padding: 2rem;"><span class="close-btn" onclick="closeModal()">&times;</span><h3 class="text-2xl modal-header-text" style="color: #059669;">GST Refund under Export (Zero-Rated) under LUT/Bond</h3><div class="provision-card green text-center py-6"><h4 class="font-bold text-gray-800 text-lg mb-4">Refund of ITC paid on Exports - CGST RULE 89(4)</h4><div class="text-lg overflow-x-auto">\[ \text{Refund Amount} = \frac{\text{Net ITC} \times \text{Zero-Rated Turnover}}{\text{Adjusted Total Turnover}} \]</div></div><p class="text-xs text-gray-600 mt-2 px-4">"Net ITC" means input tax credit availed on inputs goods and input services during the relevant period.</p></div></div>
+  
+  <div id="guide-modal" class="modal">
+    <div class="modal-content overflow-y-auto max-h-[85vh]" style="padding: 2rem;">
+      <span class="close-btn" onclick="closeModal()">&times;</span>
+      <h3 class="text-2xl modal-header-text" style="color: #1e40af;">🚀 Quick Guide - Start Here</h3>
+      <div class="provision-card">
+        <h4 class="font-bold text-gray-800 text-lg mb-2">What this calculator does</h4>
+        <p class="text-sm text-gray-700 mb-3 font-semibold">This tool estimates GST refund for:</p>
+        <ul class="list-disc pl-5 text-sm text-gray-700 space-y-1 mb-3">
+          <li>Refund under inverted duty structure</li>
+          <li>Refund of input tax credit for exports under LUT or bond</li>
+        </ul>
+        <p class="text-sm text-gray-700 mb-3">Enter month-wise data. The system applies the rule formulas and shows refund for each month and for the full year.</p>
+        <p class="text-sm text-blue-700 italic font-medium">Useful for workings, planning and reconciliation before filing on the portal.</p>
+      </div>
+      <div class="provision-card green">
+        <h4 class="font-bold text-gray-800 text-lg mb-2">What you should keep ready</h4>
+        <p class="text-sm text-gray-700 mb-2 font-semibold">Keep these figures for every month:</p>
+        <ul class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 list-disc pl-5 text-sm text-gray-700 mb-2">
+          <li>Zero rated turnover (actual invoice value)</li>
+          <li>Zero rated turnover (FOB value)</li>
+          <li>Non-inverted taxable turnover</li>
+          <li>Inverted taxable turnover</li>
+          <li>Tax payable on inverted supply</li>
+          <li>ITC on inputs</li>
+          <li>ITC on input services</li>
+        </ul>
+        <p class="text-sm text-emerald-700 italic font-medium">Once available, the calculation becomes plug and play.</p>
+      </div>
+      <div class="provision-card">
+        <h4 class="font-bold text-gray-800 text-lg mb-2">How to enter data – 3 easy ways</h4>
+        <ul class="list-decimal pl-5 text-sm text-gray-700 space-y-2">
+          <li><strong>Manual:</strong> Type values directly in the cells.</li>
+          <li><strong>Paste:</strong> Click a column header to paste 12 months together.</li>
+          <li><strong>Excel:</strong> Upload the Excel template to auto-populate instantly.</li>
+        </ul>
+      </div>
+      <div class="provision-card amber">
+        <h4 class="font-bold text-gray-800 text-lg mb-2">Important logic you should know</h4>
+        <p class="text-sm text-gray-700 leading-relaxed">
+          For zero rated turnover, <strong>actual value is compared with FOB value</strong>. 
+          Normally the lower figure is taken. 
+          <br><br>
+          <span class="text-amber-800 font-bold underline">If one value is zero, the higher figure is considered.</span> 
+          This prevents distortion where only one number exists.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Redesigned Lighter Welcome Modal -->
+  <div id="welcome-modal" class="modal">
+    <div class="modal-content border-none shadow-2xl">
+      <div class="welcome-header">
+        <div class="mx-auto w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mb-4 shadow-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+        </div>
+        <h3 class="text-3xl font-bold tracking-tight">GST Refund Calculator</h3>
+      </div>
+      <div class="welcome-body text-center">
+        <p class="text-gray-600 mb-8 leading-relaxed text-lg">
+          Compute refund amounts under the <strong>Inverted Duty Structure</strong> and <strong>Zero-Rated Supplies. (LUT)</strong>
+        </p>
+        <div class="flex flex-col gap-4">
+            <button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-2xl transition-all shadow-xl shadow-blue-100 text-lg" onclick="closeWelcomeModal()">
+                Open Calculator
+            </button>
+            <div class="flex items-center justify-center gap-2 mt-2">
+                <span class="h-px w-8 bg-gray-200"></span>
+                <p class="text-[11px] text-gray-400 uppercase tracking-widest font-bold">Educational Utility</p>
+                <span class="h-px w-8 bg-gray-200"></span>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="data-modal" class="modal"><div class="modal-content" style="padding:2.5rem;"><span class="close-btn" onclick="closeModal()">&times;</span><h3 class="text-xl font-bold mb-3">Paste Data for <span id="modal-column-title"></span></h3><textarea id="data-paste-area" class="w-full p-2 border rounded-xl bg-white/20 focus:ring-2 focus:ring-blue-400 focus:outline-none" rows="10" placeholder="Paste your 12 rows of data here..."></textarea><div class="flex justify-center mt-4"><button class="button" onclick="loadPastedData()">Update Calculator</button></div></div></div>
+  <div id="upload-modal" class="modal"><div class="modal-content" style="padding:2.5rem;"><span class="close-btn" onclick="closeModal()">&times;</span><h3 class="text-xl font-bold mb-3">Upload Excel Data</h3><input type="file" id="file-input" accept=".csv, .xlsx, .xls" class="w-full p-2 border rounded-xl mb-4"><div class="flex justify-center"><button class="button" onclick="handleFileUpload()">Upload Data</button></div></div></div>
+  <div id="version-modal" class="modal"><div class="modal-content" style="padding:2.5rem;"><span class="close-btn" onclick="closeModal()">&times;</span><h3 class="text-2xl redesigned-title mb-4" style="-webkit-text-fill-color: #2563eb;">Upcoming Features (v1.1)</h3><div class="space-y-4 text-left"><div class="provision-card"><p class="font-bold text-gray-800">1. Maximize Your Refund</p><p class="text-sm text-gray-600">Grouping months into "Relevant Periods" to optimize calculations and maximize refund eligibility.</p></div><div class="provision-card green"><p class="font-bold text-gray-800">2. Refund eligibility Checklist</p><p class="text-sm text-gray-600">Evaluates admissibility of refund from key data points.</p></div></div></div></div>
+
+  <script>
+    const months = ["April", "May", "June", "July", "August", "September", "October", "November", "December", "January", "February", "March"];
+    const tbody = document.getElementById('calculator-body');
+    months.forEach((m, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td class="font-medium text-gray-800 sticky left-0 bg-white/20 px-2">${m}</td><td><input type="text" id="actual_${i}" oninput="handleInput(this, ${i})"></td><td><input type="text" id="fob_${i}" oninput="handleInput(this, ${i})"></td><td><input type="text" id="min_val_${i}" readonly></td><td><input type="text" id="noninv_${i}" oninput="handleInput(this, ${i})"></td><td><input type="text" id="inv_${i}" oninput="handleInput(this, ${i})"></td><td><input type="text" id="agg_turnover_${i}" readonly></td><td><input type="text" id="tax_payable_${i}" oninput="handleInput(this, ${i})"></td><td><input type="text" id="itc_in_${i}" oninput="handleInput(this, ${i})"></td><td><input type="text" id="itc_ser_${i}" oninput="handleInput(this, ${i})"></td><td><input type="text" id="total_itc_${i}" readonly></td><td class="highlight-inv-refund"><input type="text" id="inv_refund_${i}" readonly></td><td class="highlight-zr-refund"><input type="text" id="zr_refund_${i}" readonly></td>`;
+        tbody.appendChild(tr);
+    });
+
+    const format = n => {
+        if (n === 0) return "0"; if (!n || isNaN(n)) return "";
+        const neg = n < 0, abs = Math.abs(n);
+        let s = Math.round(abs).toString(), last = s.substring(s.length - 3), oth = s.substring(0, s.length - 3);
+        if (oth != '') last = ',' + last;
+        return (neg ? "-" : "") + oth.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + last;
+    };
+    const getFloatVal = id => parseFloat(document.getElementById(id).value.replace(/,/g, '')) || 0;
+    const recalc = idx => {
+        const a = getFloatVal(`actual_${idx}`), b = getFloatVal(`fob_${idx}`), d = getFloatVal(`noninv_${idx}`), e = getFloatVal(`inv_${idx}`), g = getFloatVal(`tax_payable_${idx}`), h = getFloatVal(`itc_in_${idx}`), i = getFloatVal(`itc_ser_${idx}`);
+        let c = (a === 0 || b === 0) ? Math.max(a, b) : Math.min(a, b), f = c + d + e, j = h + i;
+        const k = (f && j) ? (h * e / f) - (g * h / j) : 0, l = f ? (c * j / f) : 0;
+        document.getElementById(`min_val_${idx}`).value = format(c); document.getElementById(`agg_turnover_${idx}`).value = format(f); document.getElementById(`total_itc_${idx}`).value = format(j); document.getElementById(`inv_refund_${idx}`).value = format(k); document.getElementById(`zr_refund_${idx}`).value = format(l); recalcTotal();
+    };
+    const recalcTotal = () => {
+        let sums = [0,0,0,0,0,0,0,0,0,0];
+        const ids = ['actual','fob','min_val','noninv','inv','agg_turnover','tax_payable','itc_in','itc_ser','total_itc'];
+        for(let i=0; i<12; i++) ids.forEach((id, idx) => sums[idx] += getFloatVal(`${id}_${i}`));
+        ids.forEach((id, idx) => document.getElementById(`sum_${id}`).value = format(sums[idx]));
+        document.getElementById("sum_zr_refund").value = format(sums[5] ? (sums[2] * sums[9] / sums[5]) : 0);
+        document.getElementById("sum_inv_refund").value = format((sums[5] && sums[9]) ? (sums[7] * sums[4] / sums[5]) - (sums[6] * sums[7] / sums[9]) : 0);
+    };
+    const handleInput = (el, idx) => {
+        let start = el.selectionStart, orig = el.value.length;
+        let v = el.value.replace(/[^0-9.-]/g, ''); if(v.indexOf('-') > 0) v = v.replace('-', ''); if((v.match(/-/g)||[]).length > 1) v = v.slice(0, v.lastIndexOf('-')) + v.slice(v.lastIndexOf('-')+1);
+        el.value = (v===''||v==='-') ? v : (v.endsWith('.') ? v : format(parseFloat(v)));
+        let diff = el.value.length - orig; el.setSelectionRange(start + diff, start + diff); recalc(idx);
+    };
+    const handleFileUpload = () => {
+        const file = document.getElementById('file-input').files[0]; if(!file) return;
+        const reader = new FileReader(); reader.onload = e => {
+            try {
+                const workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' }), data = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1 });
+                if(!data || data.length < 1) return showMessage("Error: File is empty.");
+                const h = Array.from(data[0] || []).map(x => String(x || "").toLowerCase());
+                const f = keys => h.findIndex(x => keys.some(k => x.includes(k)));
+                const map = { 
+                    actual: f(['actual', 'zero supply', 'zero rated']), 
+                    fob: f(['fob']), 
+                    noninv: f(['non-inverted', 'non inverted']), 
+                    inv: h.findIndex(x => x.includes('inverted') && !x.includes('non')), 
+                    tax: f(['tax on', 'tax payable']), 
+                    itc_in: f(['itc input goods', 'itc inputs', 'input goods', 'inputs goods', 'itc on account of input']), 
+                    itc_ser: f(['itc service', 'itc services', 'input service', 'input services', 'itc on account of service']) 
+                };
+                data.slice(1).forEach((row, i) => { if(i<12 && row) { Object.keys(map).forEach(k => { if(map[k]>-1 && row[map[k]]!==undefined) document.getElementById(`${k==='tax'?'tax_payable':k}_${i}`).value = format(parseFloat(row[map[k]]) || 0); }); recalc(i); } });
+                closeModal(); showMessage('Data Imported Successfully!');
+            } catch (err) { showMessage("Error processing file."); }
+        }; reader.readAsArrayBuffer(file);
+    };
+    const exportToExcel = () => {
+        const table = document.getElementById('gst-table');
+        const h = Array.from(table.querySelector('thead tr:first-child').querySelectorAll('th')).map(th => th.innerText.replace(/\s+/g, ' '));
+        const d = Array.from(table.querySelectorAll('tbody tr, tfoot tr')).map(r => {
+            return Array.from(r.querySelectorAll('td')).map((c, idx) => {
+                let val = c.querySelector('input')?.value || c.innerText;
+                // Number Format Data for Excel: Strip commas and convert to actual number
+                if (idx > 0) {
+                    let clean = val.replace(/,/g, '');
+                    if (!isNaN(clean) && clean !== '') return parseFloat(clean);
+                }
+                return val;
+            });
+        });
+        d.unshift(h);
+        XLSX.writeFile({ SheetNames: ["GST"], Sheets: { "GST": XLSX.utils.aoa_to_sheet(d) } }, "GST_Refund_Calculations.xlsx");
+        showMessage('Excel Downloaded!');
+    };
+    const downloadTemplate = () => {
+        const data = [["Month", "Zero Rated (Actual)", "Zero Rated (FOB)", "Non Inverted Supply", "Inverted Supply", "Tax Payable", "ITC Inputs Goods", "ITC Input Service"], ...months.map(m => [m, "", "", "", "", "", "", ""])];
+        XLSX.writeFile({ SheetNames: ["Template"], Sheets: { "Template": XLSX.utils.aoa_to_sheet(data) } }, "GST_Refund_Template.xlsx");
+    };
+    const openColumnModal = (id, title) => { activeColumnId = id; document.getElementById('modal-column-title').innerText = title; document.getElementById('data-paste-area').value = ''; document.getElementById('data-modal').style.display = 'flex'; };
+    const closeModal = () => document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+    const showMessage = msg => { const b = document.getElementById('status-message'); b.innerText = msg; b.style.display = 'block'; setTimeout(() => b.style.display = 'none', 1000); };
+    const openInvertedProvisionModal = () => document.getElementById('inverted-provision-modal').style.display = 'flex';
+    const openExportProvisionModal = () => document.getElementById('export-provision-modal').style.display = 'flex';
+    const openGuideModal = () => document.getElementById('guide-modal').style.display = 'flex';
+    const openUploadModal = () => document.getElementById('upload-modal').style.display = 'flex';
+    const openVersionModal = () => document.getElementById('version-modal').style.display = 'flex';
+    const closeWelcomeModal = () => { closeModal(); };
+    const resetCalculator = () => { document.querySelectorAll('input[type="text"]').forEach(i => { if(!i.readOnly) i.value = ''; }); for(let i=0; i<12; i++) recalc(i); showMessage('Data reset!'); };
+    const loadPastedData = () => { const lines = document.getElementById('data-paste-area').value.trim().split("\n"); lines.forEach((l, i) => { if (i < 12) document.getElementById(`${activeColumnId}_${i}`).value = format(parseFloat(l.replace(/,/g, '')) || 0); }); for(let i=0; i<12; i++) recalc(i); closeModal(); };
+    const loadSampleData = () => {
+        const s = [{a:2000000,f:2100000,d:7500000,e:50000000,tp:2500000,ii:3200000,is:400000},{a:2005000,f:2105000,d:7515000,e:50020000,tp:2501000,ii:3360000,is:1200000},{a:2010000,f:2110000,d:4000000,e:50040000,tp:2502000,ii:3528000,is:609857},{a:2100000,f:2000000,d:4015000,e:50060000,tp:2503000,ii:3704400,is:376643},{a:2105000,f:2005000,d:4030000,e:52500000,tp:2625000,ii:3889620,is:376643},{a:2000000,f:2100000,d:4045000,e:70000000,tp:3500000,ii:2500000,is:380000},{a:1800000,f:1850000,d:8000000,e:70020000,tp:3501000,ii:3889620,is:376643},{a:1805000,f:1855000,d:8015000,e:60000000,tp:3000000,ii:4084101,is:450000},{a:2100000,f:2000000,d:8030000,e:60020000,tp:3001000,ii:4288306,is:376643},{a:2105000,f:2005000,d:6500000,e:58000000,tp:2900000,ii:4200000,is:792803},{a:2100000,f:2000000,d:6515000,e:58020000,tp:2901000,ii:4410000,is:792803},{a:2105000,f:2005000,d:6530000,e:70000000,tp:3500000,ii:5000000,is:792803}];
+        s.forEach((d, i) => { document.getElementById(`actual_${i}`).value = format(d.a); document.getElementById(`fob_${i}`).value = format(d.f); document.getElementById(`noninv_${i}`).value = format(d.d); document.getElementById(`inv_${i}`).value = format(d.e); document.getElementById(`tax_payable_${i}`).value = format(d.tp); document.getElementById(`itc_in_${i}`).value = format(d.ii); document.getElementById(`itc_ser_${i}`).value = format(d.is); recalc(i); });
+        showMessage('Sample data loaded!');
+    };
+    window.onload = () => { document.getElementById('welcome-modal').style.display='flex'; recalcTotal(); };
+  </script>
+</body>
+</html>
